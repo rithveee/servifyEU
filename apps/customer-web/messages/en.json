@@ -1,0 +1,116 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "viewAll": "View all"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "bookings": "My Bookings",
+    "account": "My Account",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "becomeProvider": "Become a Provider"
+  },
+  "home": {
+    "hero": {
+      "title": "Home services, sorted",
+      "subtitle": "Book trusted professionals for cleaning, plumbing, electrical and more",
+      "searchPlaceholder": "What service do you need?",
+      "searchCta": "Find Professionals"
+    },
+    "categories": {
+      "title": "Our Services",
+      "subtitle": "Everything your home needs"
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "step1Title": "Search & Select",
+      "step1Desc": "Browse services and find the right professional for your needs",
+      "step2Title": "Book & Pay",
+      "step2Desc": "Choose your time slot and pay securely online",
+      "step3Title": "Sit Back & Relax",
+      "step3Desc": "Your vetted professional arrives and gets the job done"
+    },
+    "trust": {
+      "providers": "10,000+ vetted professionals",
+      "countries": "5 countries",
+      "rating": "4.8 average rating",
+      "bookings": "500,000+ bookings completed"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your ServifyEU account",
+      "emailLabel": "Email address",
+      "passwordLabel": "Password",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign in",
+      "noAccount": "Don't have an account?",
+      "register": "Register"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Join ServifyEU today",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "emailLabel": "Email address",
+      "passwordLabel": "Password",
+      "countryLabel": "Country",
+      "gdprConsent": "I agree to the Terms of Service and Privacy Policy, and consent to my data being processed as described",
+      "marketingOptIn": "Send me updates about new services and promotions",
+      "createAccount": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter your email and we'll send you a reset link",
+      "emailLabel": "Email address",
+      "sendLink": "Send reset link",
+      "backToLogin": "Back to sign in"
+    }
+  },
+  "bookings": {
+    "title": "My Bookings",
+    "empty": {
+      "title": "No bookings yet",
+      "subtitle": "Book your first home service and see it here",
+      "cta": "Browse Services"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "CANCELLED_CUSTOMER": "Cancelled",
+      "CANCELLED_PROVIDER": "Cancelled by Provider",
+      "CANCELLED_ADMIN": "Cancelled",
+      "NO_SHOW": "No Show",
+      "DISPUTED": "Disputed"
+    }
+  },
+  "chat": {
+    "title": "Customer Support",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "typing": "Aria is typing...",
+    "escalated": "You're being connected to a human agent",
+    "helpful": "Was this helpful?",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

@@ -1,0 +1,635 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector, pgcrypto]
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+  SUPERADMIN
+  SUPPORT_AGENT
+  FINANCE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DELETED
+}
+
+enum KYCStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum PricingType {
+  FIXED
+  HOURLY
+  CUSTOM_QUOTE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED_CUSTOMER
+  CANCELLED_PROVIDER
+  CANCELLED_ADMIN
+  NO_SHOW
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORISED
+  CAPTURED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  FAILED
+}
+
+enum SupportChannel {
+  CHAT
+  EMAIL
+  VOICE
+  IN_APP
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_CUSTOMER
+  RESOLVED
+  CLOSED
+  ESCALATED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─────────────────────────────────────────
+// CORE USER MODELS
+// ─────────────────────────────────────────
+
+model User {
+  id               String     @id @default(cuid())
+  email            String     @unique
+  emailVerified    Boolean    @default(false)
+  phone            String?    @unique
+  phoneVerified    Boolean    @default(false)
+  passwordHash     String?
+  firstName        String
+  lastName         String
+  avatarUrl        String?
+  locale           String     @default("en")
+  currency         String     @default("EUR")
+  countryCode      String     @default("DE")
+  role             UserRole   @default(CUSTOMER)
+  status           UserStatus @default(ACTIVE)
+  gdprConsentAt    DateTime?
+  marketingOptIn   Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  addresses      Address[]
+  bookings       Booking[]
+  reviews        Review[]
+  notifications  Notification[]
+  supportTickets SupportTicket[]
+  sessions       Session[]
+  paymentMethods PaymentMethod[]
+  provider       Provider?
+  auditLogs      AuditLog[]
+
+  @@index([email])
+  @@index([countryCode])
+  @@index([status])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+model Provider {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id])
+  businessName         String?
+  vatNumber            String?
+  tradeLicenseUrl      String?
+  idVerificationUrl    String?
+  bankAccountIBANEncrypted String?
+  bio                  String?
+  yearsExperience      Int?
+  serviceRadius        Int       @default(20)
+  latitude             Float?
+  longitude            Float?
+  rating               Float     @default(0)
+  reviewCount          Int       @default(0)
+  completedJobs        Int       @default(0)
+  isBackgroundChecked  Boolean   @default(false)
+  kycStatus            KYCStatus @default(PENDING)
+  kycReviewNote        String?
+  kycReviewedAt        DateTime?
+  kycReviewedById      String?
+  isOnline             Boolean   @default(false)
+  lastSeenAt           DateTime?
+  stripeConnectId      String?
+  stripeConnectOnboarded Boolean @default(false)
+  crossBorderEnabled   Boolean   @default(false)
+  crossBorderCountries String[]  @default([])
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  services      ProviderService[]
+  availability  Availability[]
+  bookings      Booking[]
+  earnings      Earning[]
+  documents     ProviderDocument[]
+
+  @@index([kycStatus])
+  @@index([latitude, longitude])
+}
+
+model ProviderDocument {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  type       String   // "id_front" | "id_back" | "trade_licence" | "insurance"
+  s3Key      String
+  s3Url      String
+  status     String   @default("pending") // "pending" | "approved" | "rejected"
+  reviewNote String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([providerId])
+}
+
+model Address {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  label       String    @default("Home")
+  line1       String
+  line2       String?
+  city        String
+  postcode    String
+  countryCode String
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  bookings Booking[]
+
+  @@index([userId])
+}
+
+model PaymentMethod {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  stripePaymentMethodId String  @unique
+  type                 String   // "card" | "sepa_debit" | "ideal"
+  last4                String?
+  brand                String?
+  expiryMonth          Int?
+  expiryYear           Int?
+  isDefault            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────
+// SERVICE CATALOGUE
+// ─────────────────────────────────────────
+
+model ServiceCategory {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  icon      String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  translations ServiceCategoryTranslation[]
+  services     Service[]
+}
+
+model ServiceCategoryTranslation {
+  id          String          @id @default(cuid())
+  categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id])
+  locale      String
+  name        String
+  description String?
+
+  @@unique([categoryId, locale])
+}
+
+model Service {
+  id              String      @id @default(cuid())
+  categoryId      String
+  category        ServiceCategory @relation(fields: [categoryId], references: [id])
+  slug            String      @unique
+  basePrice       Decimal     @db.Decimal(10, 2)
+  currency        String      @default("EUR")
+  durationMinutes Int
+  pricingType     PricingType @default(FIXED)
+  isActive        Boolean     @default(true)
+  vatRate         Float       @default(0.20)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  translations     ServiceTranslation[]
+  providerServices ProviderService[]
+  bookings         Booking[]
+  addons           ServiceAddon[]
+
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+model ServiceTranslation {
+  id           String   @id @default(cuid())
+  serviceId    String
+  service      Service  @relation(fields: [serviceId], references: [id])
+  locale       String
+  name         String
+  description  String
+  whatToExpect String?
+  includes     String[]
+
+  @@unique([serviceId, locale])
+}
+
+model ServiceAddon {
+  id        String   @id @default(cuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id])
+  slug      String
+  price     Decimal  @db.Decimal(10, 2)
+  isActive  Boolean  @default(true)
+
+  translations ServiceAddonTranslation[]
+  bookingAddons BookingAddon[]
+}
+
+model ServiceAddonTranslation {
+  id      String       @id @default(cuid())
+  addonId String
+  addon   ServiceAddon @relation(fields: [addonId], references: [id])
+  locale  String
+  name    String
+
+  @@unique([addonId, locale])
+}
+
+model ProviderService {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id])
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  customPrice Decimal? @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+
+  @@unique([providerId, serviceId])
+  @@index([serviceId])
+}
+
+// ─────────────────────────────────────────
+// AVAILABILITY
+// ─────────────────────────────────────────
+
+model Availability {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  dayOfWeek  Int      // 0=Sunday, 6=Saturday
+  startTime  String   // "09:00"
+  endTime    String   // "18:00"
+  isActive   Boolean  @default(true)
+
+  @@index([providerId])
+}
+
+model AvailabilityBlock {
+  id         String   @id @default(cuid())
+  providerId String
+  date       DateTime @db.Date
+  reason     String?  // "vacation" | "sick" | "other"
+  createdAt  DateTime @default(now())
+
+  @@index([providerId, date])
+}
+
+// ─────────────────────────────────────────
+// BOOKINGS & PAYMENTS
+// ─────────────────────────────────────────
+
+model Booking {
+  id                    String        @id @default(cuid())
+  bookingNumber         String        @unique @default(cuid())
+  customerId            String
+  customer              User          @relation(fields: [customerId], references: [id])
+  providerId            String?
+  provider              Provider?     @relation(fields: [providerId], references: [id])
+  serviceId             String
+  service               Service       @relation(fields: [serviceId], references: [id])
+  addressId             String
+  address               Address       @relation(fields: [addressId], references: [id])
+  status                BookingStatus @default(PENDING)
+  scheduledAt           DateTime
+  scheduledEndAt        DateTime
+  actualStartAt         DateTime?
+  actualEndAt           DateTime?
+  startLatitude         Float?
+  startLongitude        Float?
+  baseAmount            Decimal       @db.Decimal(10, 2)
+  discountAmount        Decimal       @db.Decimal(10, 2) @default(0)
+  vatAmount             Decimal       @db.Decimal(10, 2)
+  totalAmount           Decimal       @db.Decimal(10, 2)
+  currency              String        @default("EUR")
+  paymentStatus         PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?
+  stripeIdempotencyKey  String?       @unique
+  notes                 String?
+  cancellationReason    String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  addons        BookingAddon[]
+  review        Review?
+  payment       Payment?
+  statusHistory BookingStatusHistory[]
+
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([paymentStatus])
+}
+
+model BookingAddon {
+  id        String       @id @default(cuid())
+  bookingId String
+  booking   Booking      @relation(fields: [bookingId], references: [id])
+  addonId   String
+  addon     ServiceAddon @relation(fields: [addonId], references: [id])
+  price     Decimal      @db.Decimal(10, 2)
+}
+
+model BookingStatusHistory {
+  id          String        @id @default(cuid())
+  bookingId   String
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+  status      BookingStatus
+  note        String?
+  changedById String?
+  createdAt   DateTime      @default(now())
+
+  @@index([bookingId])
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  bookingId             String   @unique
+  booking               Booking  @relation(fields: [bookingId], references: [id])
+  stripePaymentIntentId String   @unique
+  stripeChargeId        String?
+  amount                Decimal  @db.Decimal(10, 2)
+  currency              String
+  status                String
+  refundedAmount        Decimal? @db.Decimal(10, 2)
+  vatAmount             Decimal  @db.Decimal(10, 2)
+  platformFee           Decimal  @db.Decimal(10, 2)
+  providerPayout        Decimal  @db.Decimal(10, 2)
+  stripeTransferId      String?
+  invoiceS3Key          String?
+  payoutProcessedAt     DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Earning {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id])
+  bookingId   String
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String
+  status      String   @default("pending") // "pending" | "paid"
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([providerId])
+}
+
+// ─────────────────────────────────────────
+// REVIEWS & RATINGS
+// ─────────────────────────────────────────
+
+model Review {
+  id              String   @id @default(cuid())
+  bookingId       String   @unique
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  customerId      String
+  customer        User     @relation(fields: [customerId], references: [id])
+  providerId      String
+  rating          Int      // 1-5
+  comment         String?
+  isPublic        Boolean  @default(true)
+  providerReply   String?
+  providerReplyAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([providerId])
+  @@index([customerId])
+}
+
+// ─────────────────────────────────────────
+// PROMOTIONS
+// ─────────────────────────────────────────
+
+model PromoCode {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  type         String    // "percentage" | "fixed"
+  value        Decimal   @db.Decimal(10, 2)
+  serviceId    String?   // null = global
+  minOrderAmount Decimal? @db.Decimal(10, 2)
+  maxUses      Int?
+  usedCount    Int       @default(0)
+  expiresAt    DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+}
+
+// ─────────────────────────────────────────
+// SUPPORT & AI
+// ─────────────────────────────────────────
+
+model SupportTicket {
+  id               String         @id @default(cuid())
+  ticketNumber     String         @unique @default(cuid())
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id])
+  bookingId        String?
+  channel          SupportChannel
+  status           TicketStatus   @default(OPEN)
+  priority         TicketPriority @default(MEDIUM)
+  subject          String
+  aiHandled        Boolean        @default(true)
+  escalatedToHuman Boolean        @default(false)
+  assignedAgentId  String?
+  callRecordingUrl String?
+  callTranscript   String?
+  resolvedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  messages       TicketMessage[]
+  aiInteractions AIInteraction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([assignedAgentId])
+}
+
+model TicketMessage {
+  id         String        @id @default(cuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id])
+  role       String        // "user" | "assistant" | "agent"
+  content    String
+  isInternal Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@index([ticketId])
+}
+
+model AIInteraction {
+  id               String        @id @default(cuid())
+  ticketId         String
+  ticket           SupportTicket @relation(fields: [ticketId], references: [id])
+  userMessage      String
+  aiResponse       String
+  tokensInput      Int
+  tokensOutput     Int
+  model            String
+  latencyMs        Int
+  wasHelpful       Boolean?
+  escalated        Boolean       @default(false)
+  escalationReason String?
+  createdAt        DateTime      @default(now())
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model KnowledgeChunk {
+  id        String   @id @default(cuid())
+  source    String   // "faq" | "policy" | "service_description"
+  sourceId  String
+  content   String
+  embedding Unsupported("vector(1536)")?
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+
+  @@index([locale])
+}
+
+// ─────────────────────────────────────────
+// AUDIT & COMPLIANCE
+// ─────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String   // "booking.cancelled" | "user.deleted" | "refund.issued"
+  entityType String
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

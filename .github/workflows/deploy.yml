@@ -1,0 +1,72 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: eu-west-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        run: |
+          docker build \
+            -f infrastructure/docker/api.Dockerfile \
+            -t $ECR_REGISTRY/servify-api:${{ github.sha }} \
+            -t $ECR_REGISTRY/servify-api:latest \
+            .
+          docker push $ECR_REGISTRY/servify-api:${{ github.sha }}
+          docker push $ECR_REGISTRY/servify-api:latest
+
+      - name: Build and push AI Agent image
+        run: |
+          docker build \
+            -f infrastructure/docker/ai-agent.Dockerfile \
+            -t $ECR_REGISTRY/servify-ai-agent:${{ github.sha }} \
+            -t $ECR_REGISTRY/servify-ai-agent:latest \
+            .
+          docker push $ECR_REGISTRY/servify-ai-agent:${{ github.sha }}
+          docker push $ECR_REGISTRY/servify-ai-agent:latest
+
+      - name: Build and push Customer Web image
+        run: |
+          docker build \
+            -f infrastructure/docker/customer-web.Dockerfile \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_WS_URL=${{ secrets.NEXT_PUBLIC_WS_URL }} \
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }} \
+            -t $ECR_REGISTRY/servify-customer-web:${{ github.sha }} \
+            -t $ECR_REGISTRY/servify-customer-web:latest \
+            .
+          docker push $ECR_REGISTRY/servify-customer-web:${{ github.sha }}
+          docker push $ECR_REGISTRY/servify-customer-web:latest
+
+      - name: Deploy to EKS
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name servify-eu-cluster
+          kubectl set image deployment/api api=$ECR_REGISTRY/servify-api:${{ github.sha }}
+          kubectl set image deployment/ai-agent ai-agent=$ECR_REGISTRY/servify-ai-agent:${{ github.sha }}
+          kubectl set image deployment/customer-web customer-web=$ECR_REGISTRY/servify-customer-web:${{ github.sha }}
+          kubectl rollout status deployment/api --timeout=120s
+          kubectl rollout status deployment/ai-agent --timeout=120s
+          kubectl rollout status deployment/customer-web --timeout=120s

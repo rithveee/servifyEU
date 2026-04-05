@@ -1,0 +1,116 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Etwas ist schiefgelaufen",
+    "retry": "Erneut versuchen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "search": "Suchen",
+    "close": "Schließen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "viewAll": "Alle anzeigen"
+  },
+  "nav": {
+    "home": "Startseite",
+    "services": "Dienstleistungen",
+    "bookings": "Meine Buchungen",
+    "account": "Mein Konto",
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "becomeProvider": "Dienstleister werden"
+  },
+  "home": {
+    "hero": {
+      "title": "Haushaltsdienstleistungen, einfach gebucht",
+      "subtitle": "Buchen Sie geprüfte Fachleute für Reinigung, Klempner, Elektro und mehr",
+      "searchPlaceholder": "Welche Dienstleistung benötigen Sie?",
+      "searchCta": "Fachleute finden"
+    },
+    "categories": {
+      "title": "Unsere Dienstleistungen",
+      "subtitle": "Alles was Ihr Zuhause braucht"
+    },
+    "howItWorks": {
+      "title": "So funktioniert es",
+      "step1Title": "Suchen & Auswählen",
+      "step1Desc": "Durchsuchen Sie Dienstleistungen und finden Sie den richtigen Fachmann",
+      "step2Title": "Buchen & Bezahlen",
+      "step2Desc": "Wählen Sie Ihren Zeitslot und bezahlen Sie sicher online",
+      "step3Title": "Zurücklehnen & Entspannen",
+      "step3Desc": "Ihr geprüfter Fachmann kommt und erledigt die Arbeit"
+    },
+    "trust": {
+      "providers": "10.000+ geprüfte Fachleute",
+      "countries": "5 Länder",
+      "rating": "4,8 Durchschnittsbewertung",
+      "bookings": "500.000+ abgeschlossene Buchungen"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Willkommen zurück",
+      "subtitle": "Melden Sie sich bei Ihrem ServifyEU-Konto an",
+      "emailLabel": "E-Mail-Adresse",
+      "passwordLabel": "Passwort",
+      "forgotPassword": "Passwort vergessen?",
+      "signIn": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "register": "Registrieren"
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "subtitle": "Jetzt bei ServifyEU anmelden",
+      "firstNameLabel": "Vorname",
+      "lastNameLabel": "Nachname",
+      "emailLabel": "E-Mail-Adresse",
+      "passwordLabel": "Passwort",
+      "countryLabel": "Land",
+      "gdprConsent": "Ich stimme den Nutzungsbedingungen und der Datenschutzerklärung zu",
+      "marketingOptIn": "Senden Sie mir Updates über neue Dienste und Angebote",
+      "createAccount": "Konto erstellen",
+      "haveAccount": "Haben Sie bereits ein Konto?",
+      "signIn": "Anmelden"
+    },
+    "forgotPassword": {
+      "title": "Passwort zurücksetzen",
+      "subtitle": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Reset-Link",
+      "emailLabel": "E-Mail-Adresse",
+      "sendLink": "Reset-Link senden",
+      "backToLogin": "Zurück zur Anmeldung"
+    }
+  },
+  "bookings": {
+    "title": "Meine Buchungen",
+    "empty": {
+      "title": "Noch keine Buchungen",
+      "subtitle": "Buchen Sie Ihre erste Haushaltsdienstleistung",
+      "cta": "Dienstleistungen durchsuchen"
+    },
+    "status": {
+      "PENDING": "Ausstehend",
+      "CONFIRMED": "Bestätigt",
+      "IN_PROGRESS": "In Bearbeitung",
+      "COMPLETED": "Abgeschlossen",
+      "CANCELLED_CUSTOMER": "Storniert",
+      "CANCELLED_PROVIDER": "Vom Anbieter storniert",
+      "CANCELLED_ADMIN": "Storniert",
+      "NO_SHOW": "Nicht erschienen",
+      "DISPUTED": "Streitig"
+    }
+  },
+  "chat": {
+    "title": "Kundensupport",
+    "placeholder": "Nachricht eingeben...",
+    "send": "Senden",
+    "typing": "Aria tippt...",
+    "escalated": "Sie werden mit einem menschlichen Agenten verbunden",
+    "helpful": "War das hilfreich?",
+    "yes": "Ja",
+    "no": "Nein"
+  }
+}
